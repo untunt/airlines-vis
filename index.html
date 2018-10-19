@@ -167,6 +167,60 @@
         drawBarsAirlinesChart(airlines, scales, config);
         drawAxesAirlinesChart(airlines, scales, config);
     }
+    
+    function loadData() {
+        return Promise.all([
+            d3.csv("routes.csv"),
+            d3.json("countries.geo.json"),
+        ]).then(datasets => {
+            store.routes = datasets[0];
+            store.geoJSON = datasets[1]
+            return store;
+        })
+    }
+    function getMapConfig(){
+        let width = 600;
+        let height = 400;
+        let container = d3.select("#Map");
+        container
+            .attr("width", width)
+            .attr("height", height)
+        return {width, height, container}
+    }
+    function getMapProjection(config) {
+        let {width, height} = config;
+        // Create a projection of type Mercator.
+        let projection = d3.geoMercator()
+        projection.scale(97)
+            .translate([width / 2, height / 2 + 20])
+                            
+        store.mapProjection = projection;
+        return projection;
+    }
+    function drawBaseMap(container, countries, projection){
+        // Create a geoPath generator and set its projection to be the projection passed as parameter.
+        let path = d3.geoPath(projection)
+        
+        container.selectAll("path").data(countries)
+            .enter().append("path")
+            .attr("d", path) // Use the path generator to draw each country
+            .attr("stroke", "#ccc")
+            .attr("fill", "#eee")
+    }
+    function drawMap(geoJeon) {
+        let config = getMapConfig();
+        let projection = getMapProjection(config)
+        drawBaseMap(config.container, geoJeon.features, projection)
+    }
+    function showData() {
+        // Get the routes from our store variable
+        let routes = store.routes
+        // Compute the number of routes per airline.
+        let airlines = groupByAirline(store.routes);
+        console.log(airlines)
+        drawAirlinesChart(airlines)
+        drawMap(store.geoJSON) // Using the data saved on loadData
+    }
 </script>
 
 </html>
