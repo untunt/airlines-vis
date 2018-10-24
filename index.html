@@ -40,12 +40,16 @@
 <script>
     let store = {}
     function loadData() {
-        let promise = d3.csv("routes.csv")
-        return promise.then(routes => {
-            store.routes = routes;
+        return Promise.all([
+            d3.csv("routes.csv"),
+            d3.json("countries.geo.json"),
+        ]).then(datasets => {
+            store.routes = datasets[0];
+            store.geoJSON = datasets[1]
             return store;
         })
     }
+    
     function groupByAirline(data) {
         //Iterate over each route, producing a dictionary where the keys are the airlines ids and the values are the information of the airline.
         let result = data.reduce((result, d) => {
@@ -95,16 +99,6 @@
     function drawAirlinesChart(airlines) {
         let config = getAirlinesChartConfig()
     }
-    function showData() {
-        //Get the routes from our store variable
-        let routes = store.routes
-        // Compute the number of routes per airline.
-        let airlines = groupByAirline(store.routes);
-        console.log(airlines)
-        // Draw airlines barchart
-        drawAirlinesChart(airlines)
-    }
-    loadData().then(showData);
     
     function getAirlinesChartScales(airlines, config) {
         let { bodyWidth, bodyHeight } = config;
@@ -168,16 +162,6 @@
         drawAxesAirlinesChart(airlines, scales, config);
     }
     
-    function loadData() {
-        return Promise.all([
-            d3.csv("routes.csv"),
-            d3.json("countries.geo.json"),
-        ]).then(datasets => {
-            store.routes = datasets[0];
-            store.geoJSON = datasets[1]
-            return store;
-        })
-    }
     function getMapConfig(){
         let width = 600;
         let height = 400;
@@ -221,6 +205,7 @@
         drawAirlinesChart(airlines)
         drawMap(store.geoJSON) // Using the data saved on loadData
     }
+	loadData().then(showData);
 </script>
 
 </html>
